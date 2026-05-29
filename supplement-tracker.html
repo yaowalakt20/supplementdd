@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Supplements">
+<title>Supplement Schedule</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:         #F4F1E9;
+  --surface:    #FDFAF3;
+  --border:     rgba(0,0,0,0.07);
+
+  --sage-bg:    #E7ECDC;
+  --sage-ink:   #586A41;
+  --sage-dot:   #8B9C6A;
+
+  --lav-bg:     #EAE6F2;
+  --lav-ink:    #635A83;
+  --lav-dot:    #9A8FBC;
+
+  --amber-bg:   #F5EDD6;
+  --amber-ink:  #8A6A28;
+  --amber-dot:  #D5A85B;
+
+  --text:       #29261B;
+  --muted:      rgba(41,38,27,0.5);
+  --muted2:     rgba(41,38,27,0.3);
+
+  --radius:     14px;
+  --mono:       'DM Mono', monospace;
+  --sans:       'DM Sans', system-ui, sans-serif;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+html, body {
+  background: var(--bg);
+  min-height: 100%;
+  font-family: var(--sans);
+  color: var(--text);
+  overscroll-behavior: none;
+}
+
+/* ── HEADER ── */
+.header {
+  background: var(--bg);
+  padding: calc(env(safe-area-inset-top) + 18px) 22px 0;
+  position: sticky; top: 0; z-index: 50;
+}
+.header-inner {
+  display: flex; align-items: flex-end; justify-content: space-between;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--border);
+}
+.header-title {
+  font-family: var(--mono);
+  font-size: 11px; font-weight: 400;
+  letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--muted);
+}
+.header-date {
+  font-family: var(--mono);
+  font-size: 11px; font-weight: 400;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+}
+.progress-bar {
+  height: 2px; background: var(--border); border-radius: 2px;
+  margin-top: -1px;
+}
+.progress-fill {
+  height: 100%; background: var(--sage-dot); border-radius: 2px;
+  transition: width 0.4s ease;
+}
+
+/* ── MAIN SCROLL ── */
+.scroll-wrap {
+  padding: 0 0 calc(env(safe-area-inset-bottom) + 32px);
+}
+
+/* ── COUNTER ── */
+.counter {
+  padding: 18px 22px 4px;
+  display: flex; align-items: baseline; gap: 6px;
+}
+.counter-num {
+  font-family: var(--mono); font-size: 28px; font-weight: 300;
+  color: var(--text); line-height: 1;
+}
+.counter-total {
+  font-family: var(--mono); font-size: 14px; font-weight: 300;
+  color: var(--muted); letter-spacing: 0.04em;
+}
+.counter-label {
+  font-family: var(--sans); font-size: 12px; color: var(--muted);
+  margin-left: auto;
+}
+
+/* ── TIMELINE ── */
+.timeline { padding: 14px 0 0; }
+
+/* ── ROW ── */
+.row {
+  display: flex; gap: 0;
+  padding: 0 22px;
+}
+
+/* vertical track */
+.gut {
+  display: flex; flex-direction: column; align-items: center;
+  width: 28px; flex-shrink: 0; padding-right: 4px;
+}
+.tl {
+  flex: 1; width: 1.5px; background: var(--border);
+  min-height: 10px;
+}
+.tl.hide { background: transparent; }
+.dot {
+  width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0;
+  background: var(--muted2); border: 1.5px solid var(--bg);
+  box-shadow: 0 0 0 1.5px var(--muted2);
+  transition: background 0.25s, box-shadow 0.25s;
+}
+.dot.sage { background: var(--sage-dot); box-shadow: 0 0 0 1.5px var(--sage-dot); }
+.dot.lav  { background: var(--lav-dot);  box-shadow: 0 0 0 1.5px var(--lav-dot);  }
+.dot.amber{ background: var(--amber-dot);box-shadow: 0 0 0 1.5px var(--amber-dot); }
+.dot.done { transform: scale(1.2); }
+.dot.matcha { opacity: 0.45; transform: scale(0.85); }
+
+/* row content */
+.content {
+  flex: 1; padding-bottom: 22px; padding-left: 10px; min-width: 0;
+}
+.row:last-child .content { padding-bottom: 8px; }
+
+.rhead {
+  display: flex; align-items: baseline; justify-content: space-between;
+  gap: 8px; padding-top: 0; margin-bottom: 10px;
+  /* align with dot center */
+  margin-top: -1px;
+}
+.meal {
+  font-family: var(--mono); font-size: 13px; font-weight: 500;
+  letter-spacing: 0.02em; color: var(--text);
+}
+.times {
+  display: flex; gap: 5px; flex-wrap: wrap; justify-content: flex-end; flex-shrink: 0;
+}
+.tchip {
+  font-family: var(--mono); font-size: 10px; color: var(--muted);
+  background: rgba(0,0,0,0.04); padding: 2px 7px; border-radius: 20px;
+  white-space: nowrap;
+}
+.tchip b { font-weight: 500; }
+
+/* ── SUPPLEMENTS ── */
+.supps { display: flex; flex-wrap: wrap; gap: 7px; }
+
+.supp { display: flex; flex-direction: column; gap: 3px; }
+
+.pill {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 6px 11px; border-radius: 20px; border: none; cursor: pointer;
+  font-family: var(--mono); font-size: 11.5px; font-weight: 400;
+  letter-spacing: 0.02em; white-space: nowrap;
+  transition: transform 0.12s, opacity 0.15s;
+  user-select: none;
+}
+.pill:active { transform: scale(0.94); }
+
+.pill.sage { background: var(--sage-bg); color: var(--sage-ink); }
+.pill.lav  { background: var(--lav-bg);  color: var(--lav-ink);  }
+
+.pill.taken { opacity: 0.6; }
+.pill.taken .chk-wrap { color: var(--sage-dot); }
+.pill.lav.taken .chk-wrap { color: var(--lav-dot); }
+
+.chk-wrap { display: flex; align-items: center; flex-shrink: 0; }
+
+.benefit {
+  font-family: var(--sans); font-size: 10px; color: var(--muted);
+  padding-left: 2px;
+}
+
+/* ── MATCHA ROW ── */
+.matcha-note {
+  display: flex; align-items: center; gap: 7px;
+  background: var(--amber-bg); color: var(--amber-ink);
+  border-radius: 10px; padding: 9px 12px;
+  font-family: var(--mono); font-size: 11px; font-weight: 400;
+  letter-spacing: 0.02em;
+}
+.tea { font-size: 15px; line-height: 1; flex-shrink: 0; }
+
+/* ── BED BLOCK ── */
+.bed-opts { display: flex; align-items: flex-end; gap: 10px; flex-wrap: wrap; }
+.bed-opt { display: flex; flex-direction: column; gap: 4px; }
+.cond {
+  font-family: var(--mono); font-size: 10px; color: var(--muted);
+  letter-spacing: 0.05em; text-transform: uppercase;
+}
+.bed-slash { font-size: 16px; color: var(--muted2); align-self: center; padding: 0 2px; margin-bottom: 2px; }
+.bed-tag {
+  margin-top: 8px;
+  font-family: var(--mono); font-size: 10px; color: var(--muted);
+  letter-spacing: 0.03em;
+}
+
+/* ── RULES BAR ── */
+.rules {
+  margin: 6px 22px 0;
+  display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+  font-family: var(--mono); font-size: 10px; color: var(--muted);
+  background: rgba(0,0,0,0.03); border-radius: 10px;
+  padding: 8px 12px;
+  letter-spacing: 0.02em;
+}
+.dotsep { color: var(--muted2); }
+
+/* ── RESET BUTTON ── */
+.reset-wrap { padding: 24px 22px 0; }
+.reset-btn {
+  width: 100%; padding: 12px;
+  border: 1px solid var(--border); border-radius: 12px;
+  background: transparent; cursor: pointer;
+  font-family: var(--mono); font-size: 11px; letter-spacing: 0.08em;
+  text-transform: uppercase; color: var(--muted);
+  transition: background 0.15s, color 0.15s;
+}
+.reset-btn:active { background: rgba(0,0,0,0.04); }
+
+/* ── ENTRY ANIMATION ── */
+.row { animation: fadeUp 0.35s ease both; }
+.row:nth-child(1) { animation-delay: 0.04s; }
+.row:nth-child(2) { animation-delay: 0.10s; }
+.row:nth-child(3) { animation-delay: 0.16s; }
+.row:nth-child(4) { animation-delay: 0.22s; }
+.row:nth-child(5) { animation-delay: 0.28s; }
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-inner">
+    <div class="header-title">Supplement Schedule</div>
+    <div class="header-date" id="hDate"></div>
+  </div>
+  <div class="progress-bar">
+    <div class="progress-fill" id="progressFill" style="width:0%"></div>
+  </div>
+</div>
+
+<!-- SCROLL AREA -->
+<div class="scroll-wrap">
+
+  <!-- COUNTER -->
+  <div class="counter">
+    <div class="counter-num" id="cntDone">0</div>
+    <div class="counter-total" id="cntTotal">/ 8 taken</div>
+    <div class="counter-label" id="cntLabel">today</div>
+  </div>
+
+  <!-- RULES -->
+  <div class="rules" style="margin-top:12px">
+    <span class="tea">🍵</span>
+    <span>60 min after matcha</span>
+    <span class="dotsep">·</span>
+    <span>Ca ↔ Zn 6 h apart</span>
+    <span class="dotsep">·</span>
+    <span>1 Mg only</span>
+    <span class="dotsep">·</span>
+    <span>Probiotic with food</span>
+  </div>
+
+  <!-- TIMELINE -->
+  <div class="timeline" id="timeline"></div>
+
+  <!-- RESET -->
+  <div class="reset-wrap">
+    <button class="reset-btn" onclick="resetAll()">↺ Reset today</button>
+  </div>
+
+</div>
+
+<script>
+// ── DATA ──────────────────────────────────────────────────────────
+const SUPP = {
+  'Vitamin C':           { benefit: 'skin + immunity',             tone: 'sage' },
+  'Marine Collagen':     { benefit: 'joints + skin',               tone: 'lav'  },
+  'Omega-3':             { benefit: 'inflammation + recovery',     tone: 'sage' },
+  'Calcium + D3':        { benefit: 'bone density',                tone: 'lav'  },
+  'B-Mix':               { benefit: 'energy + metabolism',         tone: 'sage' },
+  'CEO Probiotic':       { benefit: 'gut + fat loss',              tone: 'sage' },
+  'Zinc 15mg':           { benefit: 'muscle repair + hormones',    tone: 'sage' },
+  'Swisse Mg':           { benefit: 'sleep + relaxation',          tone: 'lav'  },
+  'Magnesium Glycinate': { benefit: 'deep sleep + nervous system', tone: 'lav'  },
+};
+
+const WINDOWS = [
+  { id: 'breakfast', wd: '7:30 AM',      we: '9–10 AM', meal: 'Breakfast',   kind: 'normal', tone: 'sage',
+    supps: ['Vitamin C','Marine Collagen','Omega-3','Calcium + D3','B-Mix'] },
+  { id: 'matcha',    wd: '10–11 AM',     we: '1 PM',    meal: 'Matcha',      kind: 'matcha', tone: 'amber',
+    note: '60-min gap · no supplements' },
+  { id: 'post',      wd: '11 AM–12 PM',  we: '~2 PM',   meal: 'Post-matcha', kind: 'normal', tone: 'sage',
+    supps: ['CEO Probiotic'] },
+  { id: 'dinner',    wd: '7–8 PM',       we: '7–8 PM',  meal: 'Dinner',      kind: 'normal', tone: 'sage',
+    supps: ['Zinc 15mg'] },
+  { id: 'bed',       wd: '9:30 PM',      we: '9:30 PM', meal: 'Bed',         kind: 'bed',    tone: 'lav',
+    options: [{ name: 'Swisse Mg', cond: 'Rest day' }, { name: 'Magnesium Glycinate', cond: 'Heavy day' }] },
+];
+
+const TOTAL = 8; // 5 breakfast + 1 probiotic + 1 zinc + 1 Mg
+
+// ── PERSISTENCE ───────────────────────────────────────────────────
+const TODAY = new Date().toISOString().slice(0, 10);
+
+function loadState() {
+  try {
+    const r = JSON.parse(localStorage.getItem('supp-state') || '{}');
+    if (r.date === TODAY) return { taken: r.taken || {}, bedChoice: r.bedChoice || null };
+  } catch (e) {}
+  return { taken: {}, bedChoice: null };
+}
+
+let { taken, bedChoice } = loadState();
+
+function saveState() {
+  localStorage.setItem('supp-state', JSON.stringify({ date: TODAY, taken, bedChoice }));
+}
+
+// ── DATE HEADER ───────────────────────────────────────────────────
+function fmtDate() {
+  const d = new Date();
+  const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  return `${days[d.getDay()]} ${d.getDate()} ${months[d.getMonth()]}`;
+}
+document.getElementById('hDate').textContent = fmtDate();
+
+// ── COUNT ─────────────────────────────────────────────────────────
+function countDone() {
+  let n = Object.keys(taken).length;
+  if (bedChoice) n += 1;
+  return Math.min(n, TOTAL);
+}
+
+function updateCounter() {
+  const done = countDone();
+  document.getElementById('cntDone').textContent = done;
+  document.getElementById('progressFill').style.width = `${(done / TOTAL) * 100}%`;
+  if (done >= TOTAL) {
+    document.getElementById('cntLabel').textContent = '✓ all done';
+    document.getElementById('cntTotal').textContent = `/ ${TOTAL} taken`;
+  } else {
+    document.getElementById('cntLabel').textContent = 'today';
+    document.getElementById('cntTotal').textContent = `/ ${TOTAL} taken`;
+  }
+}
+
+// ── TOGGLE ────────────────────────────────────────────────────────
+function toggle(wid, s) {
+  const k = `${wid}|${s}`;
+  if (taken[k]) delete taken[k]; else taken[k] = true;
+  saveState();
+  renderTimeline();
+  updateCounter();
+}
+
+function chooseBed(name) {
+  bedChoice = (bedChoice === name) ? null : name;
+  saveState();
+  renderTimeline();
+  updateCounter();
+}
+
+function resetAll() {
+  if (!confirm('Reset today\'s progress?')) return;
+  taken = {};
+  bedChoice = null;
+  saveState();
+  renderTimeline();
+  updateCounter();
+}
+
+// ── RENDER ────────────────────────────────────────────────────────
+function escHtml(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;'); }
+
+function renderTimeline() {
+  const tl = document.getElementById('timeline');
+  const last = WINDOWS.length - 1;
+
+  tl.innerHTML = WINDOWS.map((w, i) => {
+    const isFirst = i === 0, isLast = i === last;
+
+    // dot state
+    let dotCls = `dot ${w.tone}`;
+    if (w.kind === 'matcha') dotCls += ' matcha';
+    else if (w.kind === 'normal') {
+      const allTaken = (w.supps || []).every(s => taken[`${w.id}|${s}`]);
+      if (allTaken && (w.supps||[]).length > 0) dotCls += ' done';
+    } else if (w.kind === 'bed' && bedChoice) {
+      dotCls += ' done';
+    }
+
+    // time chips
+    const timeHTML = w.wd === w.we
+      ? `<span class="tchip"><b>Daily</b> ${w.wd}</span>`
+      : `<span class="tchip"><b>M–F</b> ${w.wd}</span><span class="tchip"><b>S–S</b> ${w.we}</span>`;
+
+    // content area
+    let inner = '';
+    if (w.kind === 'matcha') {
+      inner = `<div class="matcha-note"><span class="tea">🍵</span><span>${escHtml(w.note)}</span></div>`;
+    } else if (w.kind === 'normal') {
+      const pills = (w.supps || []).map(s => {
+        const meta = SUPP[s];
+        const t = !!taken[`${w.id}|${s}`];
+        const chk = t ? `<span class="chk-wrap"><svg width="9" height="9" viewBox="0 0 10 10" fill="none"><path d="M1.5 5.2 4 7.6 8.6 2.4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span>` : '';
+        return `<div class="supp">
+          <button class="pill ${meta.tone}${t?' taken':''}" onclick="toggle('${w.id}','${escHtml(s)}')" aria-pressed="${t}">
+            ${chk}<span>${escHtml(s)}</span>
+          </button>
+          <div class="benefit">${escHtml(meta.benefit)}</div>
+        </div>`;
+      }).join('');
+      inner = `<div class="supps">${pills}</div>`;
+    } else if (w.kind === 'bed') {
+      const opts = w.options.map((o, idx) => {
+        const chosen = bedChoice === o.name;
+        const meta = SUPP[o.name];
+        const chk = chosen ? `<span class="chk-wrap"><svg width="9" height="9" viewBox="0 0 10 10" fill="none"><path d="M1.5 5.2 4 7.6 8.6 2.4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span>` : '';
+        const slash = idx > 0 ? `<span class="bed-slash">/</span>` : '';
+        return `${slash}<div class="bed-opt">
+          <div class="cond">${escHtml(o.cond)}</div>
+          <button class="pill lav${chosen?' taken':''}" onclick="chooseBed('${escHtml(o.name)}')" aria-pressed="${chosen}">
+            ${chk}<span>${escHtml(o.name)}</span>
+          </button>
+          <div class="benefit">${escHtml(meta.benefit)}</div>
+        </div>`;
+      }).join('');
+      inner = `<div class="bed-block">
+        <div class="bed-opts">${opts}</div>
+        <div class="bed-tag">1 Mg only · with water</div>
+      </div>`;
+    }
+
+    return `<div class="row ${w.kind}">
+      <div class="gut">
+        <div class="tl top${isFirst?' hide':''}"></div>
+        <div class="${dotCls}"></div>
+        <div class="tl bot${isLast?' hide':''}"></div>
+      </div>
+      <div class="content">
+        <div class="rhead">
+          <span class="meal">${escHtml(w.meal)}</span>
+          <span class="times">${timeHTML}</span>
+        </div>
+        ${inner}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── INIT ──────────────────────────────────────────────────────────
+renderTimeline();
+updateCounter();
+</script>
+</body>
+</html>
